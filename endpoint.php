@@ -1,4 +1,4 @@
-<?php
+ <?php
    
 
  //Make sure that it is a POST request.
@@ -37,7 +37,11 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 			OwnerOperations::addoffers($decoded["params"]["data"]);
 		} else if ($decoded["params"]["method"] == Constants::$addImages) {
 			OwnerOperations::addImages($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$customerlogin) {
+			CustomersOperations::customerlogin($decoded["params"]["data"]);
 		} 
+
+
 }
 
 if(strcasecmp($_SERVER['REQUEST_METHOD'], 'GET') == 0){
@@ -91,7 +95,15 @@ function getImagefile($path) {
 	 public static $placeOrder = "placeOrder";
 	 public static $addoffers = "addoffers";
 	 public static $addImages = "addImages";
+	 public static $customerlogin = "customerlogin";
 
+}
+class UserIDOperations
+{
+	
+	public static function createUserid() {
+		return uniqid();
+	}
 }
 
 /**
@@ -113,7 +125,6 @@ class Dboperations
 		    {
 		        echo "Failed to connect to MySQL: " . mysqli_connect_error();
 		    }
-		    echo "database Connected successfully";
 		return $con;
 	}
 
@@ -121,23 +132,35 @@ class Dboperations
 		$con = Dboperations::dbConnection();
 		$insertQuery = "INSERT INTO OwnersAccountsTable(owneruserid, name, email, password, phonenumber) VALUES ('$ownserUserid', '$name', '$email', '$password', '$phoneNumber')";
 		if(mysqli_query($con, $insertQuery)){
-	    echo "Records added successfully OwnersAccountsTable";
+	     	return TRUE;
 		} else{
-	    echo "ERROR: Could not able to execute $sql. " . mysqli_error($con);
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
 		} 
 		// Close connection
 		mysqli_close($con);
 	}
 
-	public static function insertintoCustomerTable($customerUserid, $name, $email, $password, $phoneNumber) {
+	public static function insertintoCustomerTable($customerUserid, $owneruserid, $name, $email, $password, $phoneNumber) {
 		$con = Dboperations::dbConnection();
-		$insertQuery = "INSERT INTO CustomersTable(customeruserid, customername, email, password, phonenumber) VALUES ('$customerUserid', '$name', '$email', '$password', '$phoneNumber')";
+		$insertQuery = "INSERT INTO CustomersTable(customeruserid,owneruserid , customername, email, password, phonenumber) VALUES ('$customerUserid', '$owneruserid', '$name', '$email', '$password', '$phoneNumber')";
 		if(mysqli_query($con, $insertQuery)){
-	    echo "Records added successfully CustomersTable";
-		} else{
-	    echo "ERROR: Could not able to execute $sql. " . mysqli_error($con);
+			return TRUE;
+		} else {
+			$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
+
 		} 
-		// Close connection
 		mysqli_close($con);
 	}
 
@@ -145,9 +168,15 @@ class Dboperations
 		$con = Dboperations::dbConnection();
 		$insertQuery = "INSERT INTO Addresstable(customeruserid, plotno, street, nearby, colony, village, pincode) VALUES ('$customeruserid', '$plotno', '$street', '$nearby', '$colony', '$village', '$pincode')";
 		if(mysqli_query($con, $insertQuery)){
-	    echo " Records added successfully in addresstable";
+	   		return TRUE;
 		} else{
-	    echo "ERROR: Could not able to execute $sql. " . mysqli_error($con);
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
 		} 
 		// Close connection
 		mysqli_close($con);
@@ -157,9 +186,15 @@ class Dboperations
 		$con = Dboperations::dbConnection();
 		$insertQuery = "INSERT INTO offerstable(owneruserid, offerimages, offerpercentage) VALUES ('$owneruserid', '$offerimages', '$offerpercentage')";
 		if(mysqli_query($con, $insertQuery)){
-	    echo " Records added successfully in offerstable";
+	    	return TRUE;
 		} else{
-	    echo "ERROR: Could not able to execute $sql. " . mysqli_error($con);
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
 		} 
 		// Close connection
 		mysqli_close($con);
@@ -172,9 +207,15 @@ class Dboperations
 		$insertQuery = "INSERT INTO Products(productid, owneruserid, productname, description, price, discountprice, discountpercentage, producttype, sizes, productdetails, images) VALUES ('$pid', '$owneruserid', '$productname', '$description', '$price', '$discountprice', '$discountpercentage', '$producttype', '$sizes', '$productdetails', '$images')";
 
 		if(mysqli_query($con, $insertQuery)){
-	    echo " Records added successfully in Products";
-		} else {
-	    echo "ERROR: Could not able to execute $sql. " . mysqli_error($con);
+	     	return TRUE;
+		} else{
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
 		} 
 		// Close connection
 		mysqli_close($con);
@@ -186,9 +227,15 @@ class Dboperations
 		$insertQuery = "INSERT INTO Orders(customeruserid, owneruserid, orderid, productname, orderprice, orderdiscount, productid, orderdate, orderstatus, orderaddress, orderplacedtype, orderdetails, producttype) 
 		VALUES ('$customeruserid', '$owneruserid', '$orderid', '$productname', '$orderprice', '$orderdiscount', '$productid', '$orderdate', '$orderstatus', '$orderaddress', '$orderplacedtype', '$orderdetails', '$producttype')";
 		if(mysqli_query($con, $insertQuery)){
-	    echo " Records added successfully in Products";
+	     	return TRUE;
 		} else{
-	    echo "ERROR: Could not able to execute $sql. " . mysqli_error($con);
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
 		} 
 		// Close connection
 		mysqli_close($con);
@@ -201,13 +248,41 @@ class Dboperations
 		$insertQuery = "INSERT INTO ImagesTable(productid, owneruserid, imageid, image,imagename) VALUES ('$productid', '$owneruserid', '$imageid', '$file','$imagename')";
 
 		if(mysqli_query($con, $insertQuery)){
-	    	echo " Records added successfully in ImagesTable";
+	     	return TRUE;
 		} else {
-	   	 	echo "ERROR: Could not able to execute $sql. " . mysqli_error($con);
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
 		} 
 		// Close connection
 		mysqli_close($con);
 
+	}
+
+	public static function isregisterCustomer($email,$password) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select * FROM CustomersTable WHERE email = '$email'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = [];
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					if($row['password'] == $password) {
+					$array["customeruserid"] =  $row['customeruserid']; 
+					$array["owneruserid"] =  $row['owneruserid']; 
+					$array["customername"] =  $row['customername']; 
+					$array["email"] =  $row['email'];
+					$array["phonenumber"] =  $row['phonenumber'];
+					} else {
+						$array["error"] = "password wrong";
+					}
+			}
+		} 
+		return $array;
 	}
 
 
@@ -225,9 +300,49 @@ class CustomersOperations
 			 $email = $data["email"];
 			 $password = $data["password"];
 			 $phonenumber = $data["phoneNumber"];
-
-			Dboperations::insertintoCustomerTable("edweewef",$customername, $email, $password, $phonenumber);
+			 $owneruserid = $data["owneruserid"];
+			 $custid = UserIDOperations::createUserid();
+			 $status = Dboperations::insertintoCustomerTable($custid,$owneruserid,$customername, $email, $password, $phonenumber);
+			$array = [
+						    "status" => "success",
+						];
+			header('Content-type: application/json');
+			if($status) {
+				echo json_encode($array);
+			}
+			
 	}
+
+	public static function getProducts($owneruserid) {
+
+	}
+
+	public static function customerlogin($data) {
+		$email = $data["email"];
+		$password = $data["password"];
+		$array = Dboperations::isregisterCustomer($email, $password);
+		header('Content-type: application/json');
+		if(count($array) > 0) {
+			$array["status"] = "success";
+		} else {
+			$array["status"] = "failure";
+			$array["error"]  = "user not registered";
+		}
+		echo json_encode($array);
+	}
+
+	public static function getOrders($customeruserid) {
+
+	}
+
+	public static function getAddress($customeruserid) {
+
+	}
+
+	public static function Getoffers($owneruserid) {
+
+	}
+
 
 	public static function deleteCustomer($customerUserid){
 
@@ -242,14 +357,23 @@ class CustomersOperations
 		$colony = $data["colony"];
 		$village = $data["village"];
 		$pincode = $data["pincode"];
-		Dboperations::insertintoAddressTable($customeruserid, $plotno, $street, $nearby, $colony, $village, $pincode);
+
+		$status =  Dboperations::insertintoAddressTable($customeruserid, $plotno, $street, $nearby, $colony, $village, $pincode);
+
+		$array = $array = [
+						    "status" => "success",
+						];
+			header('Content-type: application/json');
+			if($status) {
+				echo json_encode($array);
+			}
 	}
 
 	public static function placeOrder($data) {
 		//insertintoOrders($customeruserid, $owneruserid, $orderid, $productname, $orderprice, $orderdiscount, $productid, $orderdate, $orderstatus, $orderaddress, $orderplacedtype, $orderdetails, $producttype)
 		$customeruserid = $data["customeruserid"];
 		$owneruserid = $data["owneruserid"];
-		$orderid = "createorderid";
+		$orderid = UserIDOperations::createUserid();
 		$productname = $data["productname"];
 		$orderprice = $data["orderprice"];
 		$orderdiscount = $data["orderdiscount"];
@@ -261,7 +385,16 @@ class CustomersOperations
 		$orderdetails = $data["orderdetails"];
 		$producttype = $data["producttype"];
 
-		Dboperations::insertintoOrders($customeruserid, $owneruserid, $orderid, $productname, $orderprice, $orderdiscount, $productid, $orderdate, $orderstatus, $orderaddress, $orderplacedtype, $orderdetails, $producttype);
+		$status = Dboperations::insertintoOrders($customeruserid, $owneruserid, $orderid, $productname, $orderprice, $orderdiscount, $productid, $orderdate, $orderstatus, $orderaddress, $orderplacedtype, $orderdetails, $producttype);
+
+
+		$array = $array = [
+						    "status" => "success",
+						];
+			header('Content-type: application/json');
+			if($status) {
+				echo json_encode($array);
+			}
 
 	}
 
@@ -275,16 +408,37 @@ class CustomersOperations
 class OwnerOperations
 {
 	public static function registerOwner($data) {
-		 	 $ownserUserid = "createdownerid";
+		 	 $ownserUserid = UserIDOperations::createUserid();
 		 	 $ownername = $data["ownername"];
 			 $email = $data["email"];
 			 $password = $data["password"];
 			 $phonenumber = $data["phoneNumber"];
-			 Dboperations::insertIntoOwnersTable($ownserUserid, $ownername, $email, $password, $phonenumber);
+			 $status = Dboperations::insertIntoOwnersTable($ownserUserid, $ownername, $email, $password, $phonenumber);
+
+			$array = $array = [
+							    "status" => "success",
+							];
+				header('Content-type: application/json');
+				if($status) {
+					echo json_encode($array);
+				}
+	}
+
+	public static function getAllOrders($owneruserid) {
+
+	}
+
+
+	public static function getAllCustomers($owneruserid) {
+
+	}
+
+	public static function deleteProduct($productid) {
+
 	}
 
 	public static function addProduct($data) {
-			$productid = "createpdid";
+			$productid = UserIDOperations::createUserid();
 			$owneruserid = $data["owneruserid"];
 			$productname = $data["productname"];
 			$description = $data["description"];
@@ -296,7 +450,15 @@ class OwnerOperations
 			$productdetails = $data["productdetails"];
 			$images = $data["images"];
 			
-			Dboperations::insertintoProducts($productid, $owneruserid, $productname, $description,$price, $discountprice, $discountpercentage, $producttype, $sizes, $productdetails, $images);
+			$status = Dboperations::insertintoProducts($productid, $owneruserid, $productname, $description,$price, $discountprice, $discountpercentage, $producttype, $sizes, $productdetails, $images);
+			$array = $array = [
+							    "status" => "success",
+							];
+				header('Content-type: application/json');
+				if($status) {
+					echo json_encode($array);
+				}
+
 
 	}
 
@@ -304,20 +466,39 @@ class OwnerOperations
 			$owneruserid = $data["owneruserid"];;
 			$offerimages = $data["offerimages"];
 			$offerpercentage = $data["offerpercentage"];
-			Dboperations::insertintoOffersTable($owneruserid, $offerimages, $offerpercentage);
+			$status = Dboperations::insertintoOffersTable($owneruserid, $offerimages, $offerpercentage);
+			$array = $array = [
+							    "status" => "success",
+							];
+				header('Content-type: application/json');
+				if($status) {
+					echo json_encode($array);
+				}
 	}
 
 	public static function addImages($data) {
 			$productid = "productod";
-			$imageid = "imageidcreate";
+			$imageid = UserIDOperations::createUserid();
 			$image = $data["image"];
 			$imagename = $data["imagename"];
 			$owneruserid = $data["owneruserid"];
 
-			Dboperations::insertintoImagesTable($productid, $owneruserid, $imageid, $image, $imagename);
+			$status = Dboperations::insertintoImagesTable($productid, $owneruserid, $imageid, $image, $imagename);
+			$array = $array = [
+							    "status" => "success",
+							];
+				header('Content-type: application/json');
+				if($status) {
+					echo json_encode($array);
+				}
 	}
 
+
 }
+
+/**
+ * 
+ */
 
 
 ?>
