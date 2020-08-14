@@ -39,8 +39,9 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 			OwnerOperations::addImages($decoded["params"]["data"]);
 		} else if ($decoded["params"]["method"] == Constants::$customerlogin) {
 			CustomersOperations::customerlogin($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$ownerlogin) {
+			OwnerOperations::ownerlogin($decoded["params"]["data"]);
 		} 
-
 
 }
 
@@ -96,6 +97,7 @@ function getImagefile($path) {
 	 public static $addoffers = "addoffers";
 	 public static $addImages = "addImages";
 	 public static $customerlogin = "customerlogin";
+	 public static $ownerlogin = "ownerlogin";
 
 }
 class UserIDOperations
@@ -285,6 +287,76 @@ class Dboperations
 		return $array;
 	}
 
+	public static function isregisterOwner($email,$password) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select * FROM OwnersAccountsTable WHERE email = '$email'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = [];
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					if($row['password'] == $password) {
+					$array["owneruserid"] =  $row['owneruserid']; 
+					$array["ownername"] =  $row['name']; 
+					$array["email"] =  $row['email'];
+					$array["phonenumber"] =  $row['phonenumber'];
+					} else {
+						$array["error"] = "password wrong";
+					}
+			}
+		} 
+		return $array;
+	}
+
+	public static function iscustomerRegister($email) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select count(email) FROM CustomersTable WHERE email = '$email'";
+		$result = mysqli_query($con, $insertQuery);
+		$count = mysqli_fetch_row($result)[0];
+		if ($count > 0) {
+			return TRUE;
+		} else {
+			return FALSE;
+		}
+
+	}
+
+	public static function isOwnerRegister($email) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select count(email) FROM OwnersAccountsTable WHERE email = '$email'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_fetch_row($result)[0];
+		if ($rowcount > 0) {
+			return TRUE;
+		} else {
+			return FALSE;
+		}
+
+	}
+
+
+//TODO: get all product and getimages respectiveproduct
+	// public static function getALLProducts($owneruserid) {
+	// 	$con = Dboperations::dbConnection();
+	// 	$insertQuery = "select * FROM Products WHERE owneruserid = '$owneruserid'";
+	// 	$result = mysqli_query($con, $insertQuery);
+	// 	$rowcount = mysqli_num_rows($result);
+	// 	$array = [];
+	// 	if ($rowcount > 0) {
+	// 		while($row = mysqli_fetch_array($result)) {
+	// 				if($row['password'] == $password) {
+	// 				$array["owneruserid"] =  $row['owneruserid']; 
+	// 				$array["ownername"] =  $row['name']; 
+	// 				$array["email"] =  $row['email'];
+	// 				$array["phonenumber"] =  $row['phonenumber'];
+	// 				} else {
+	// 					$array["error"] = "password wrong";
+	// 				}
+	// 		}
+	// 	} 
+	// 	return $array;
+	// }
+
 
 }
 
@@ -296,6 +368,14 @@ class CustomersOperations
 	
 	public static function registerCustomer($data) {
 
+			 if (Dboperations::iscustomerRegister($data["email"]) == TRUE) {
+			 	$array = [
+						    "status" => "failure", 
+						];
+				 $array["error"] = "email registered already";
+				echo json_encode($array);
+			 	exit();
+			 }
 			 $customername = $data["customername"];
 			 $email = $data["email"];
 			 $password = $data["password"];
@@ -408,6 +488,16 @@ class CustomersOperations
 class OwnerOperations
 {
 	public static function registerOwner($data) {
+
+			 if (Dboperations::isOwnerRegister($data["email"]) == TRUE) {
+			 	$array = [
+						    "status" => "failure", 
+						];
+				 $array["error"] = "email registered already";
+				echo json_encode($array);
+			 	exit();
+			 }
+
 		 	 $ownserUserid = UserIDOperations::createUserid();
 		 	 $ownername = $data["ownername"];
 			 $email = $data["email"];
@@ -428,6 +518,20 @@ class OwnerOperations
 
 	}
 
+
+	public static function ownerlogin($data) {
+		$email = $data["email"];
+		$password = $data["password"];
+		$array = Dboperations::isregisterOwner($email, $password);
+		header('Content-type: application/json');
+		if(count($array) > 0) {
+			$array["status"] = "success";
+		} else {
+			$array["status"] = "failure";
+			$array["error"]  = "user not registered";
+		}
+		echo json_encode($array);
+	}
 
 	public static function getAllCustomers($owneruserid) {
 
