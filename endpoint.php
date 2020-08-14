@@ -1,6 +1,6 @@
  <?php
-   
 
+include('ArrayList.php');
  //Make sure that it is a POST request.
 if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 
@@ -41,6 +41,10 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 			CustomersOperations::customerlogin($decoded["params"]["data"]);
 		} else if ($decoded["params"]["method"] == Constants::$ownerlogin) {
 			OwnerOperations::ownerlogin($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$getAddress) {
+			CustomersOperations::getAddress($decoded["params"]["data"]);
+		} if ($decoded["params"]["method"] == Constants::$getoffers) {
+			CustomersOperations::getoffers($decoded["params"]["data"]);
 		} 
 
 }
@@ -98,6 +102,8 @@ function getImagefile($path) {
 	 public static $addImages = "addImages";
 	 public static $customerlogin = "customerlogin";
 	 public static $ownerlogin = "ownerlogin";
+	 public static $getAddress = "getAddress";
+	 public static $getoffers = "getoffers";
 
 }
 class UserIDOperations
@@ -334,6 +340,48 @@ class Dboperations
 
 	}
 
+	public static function getAllAddress($customeruserid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select * FROM Addresstable WHERE customeruserid = '$customeruserid'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = array();
+		$arrylist = new ArrayList;
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					$objects = [];
+					$objects["plotno"] =  $row['plotno']; 
+					$objects["street"] =  $row['street']; 
+					$objects["nearby"] =  $row['nearby'];
+					$objects["colony"] =  $row['colony'];
+					$objects["village"] =  $row['village'];
+					$objects["pincode"] =  $row['pincode'];
+					// $array[] = $objects;
+					// array_push($array, $objects);
+					$arrylist->add($objects);
+			}
+		} 
+		return $arrylist->toArray();
+	}
+
+	public static function getAllOffers($owneruserid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select * FROM offerstable WHERE owneruserid = '$owneruserid'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = array();
+		$arrylist = new ArrayList;
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					$objects = [];
+					$objects["offerimages"] =  $row['offerimages']; 
+					$objects["offerpercentage"] =  $row['offerpercentage'];
+					// array_push($array, $objects);
+					$arrylist->add($objects);
+			}
+		} 
+		return $arrylist->toArray();
+	}
 
 //TODO: get all product and getimages respectiveproduct
 	// public static function getALLProducts($owneruserid) {
@@ -411,16 +459,25 @@ class CustomersOperations
 		echo json_encode($array);
 	}
 
-	public static function getOrders($customeruserid) {
+	public static function getOrders($data) {
 
 	}
 
-	public static function getAddress($customeruserid) {
+	public static function getAddress($data) {
+		$customeruserid = $data["customeruserid"];
+		$array = Dboperations::getAllAddress($customeruserid);
+		header('Content-type: application/json');
+		$array["status"] = "success";
+		echo json_encode($array);
 
 	}
 
-	public static function Getoffers($owneruserid) {
-
+	public static function getoffers($data) {
+		$owneruserid = $data["owneruserid"];
+		$array = Dboperations::getAllOffers($owneruserid);
+		header('Content-type: application/json');
+		$array["status"] = "success";
+		echo json_encode($array);
 	}
 
 
