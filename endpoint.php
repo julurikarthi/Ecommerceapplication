@@ -45,6 +45,10 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 			CustomersOperations::getAddress($decoded["params"]["data"]);
 		} if ($decoded["params"]["method"] == Constants::$getoffers) {
 			CustomersOperations::getoffers($decoded["params"]["data"]);
+		} if ($decoded["params"]["method"] == Constants::$getProducts) {
+			CustomersOperations::getProducts($decoded["params"]["data"]);
+		} if ($decoded["params"]["method"] == Constants::$getImagedata) {
+			CustomersOperations::getImagedata($decoded["params"]["data"]);
 		} 
 
 }
@@ -104,6 +108,8 @@ function getImagefile($path) {
 	 public static $ownerlogin = "ownerlogin";
 	 public static $getAddress = "getAddress";
 	 public static $getoffers = "getoffers";
+	 public static $getProducts = "getProducts";
+	 public static $getImagedata = "getImagedata";
 
 }
 class UserIDOperations
@@ -230,6 +236,7 @@ class Dboperations
 
 	}
 
+
 	public static function insertintoOrders($customeruserid, $owneruserid, $orderid, $productname, $orderprice, $orderdiscount, $productid, $orderdate, $orderstatus, $orderaddress, $orderplacedtype, $orderdetails, $producttype) {
 		$con = Dboperations::dbConnection();
 		$insertQuery = "INSERT INTO Orders(customeruserid, owneruserid, orderid, productname, orderprice, orderdiscount, productid, orderdate, orderstatus, orderaddress, orderplacedtype, orderdetails, producttype) 
@@ -311,6 +318,7 @@ class Dboperations
 					}
 			}
 		} 
+		mysqli_close($con);
 		return $array;
 	}
 
@@ -324,6 +332,7 @@ class Dboperations
 		} else {
 			return FALSE;
 		}
+		mysqli_close($con);
 
 	}
 
@@ -337,6 +346,7 @@ class Dboperations
 		} else {
 			return FALSE;
 		}
+		mysqli_close($con);
 
 	}
 
@@ -360,8 +370,54 @@ class Dboperations
 					// array_push($array, $objects);
 					$arrylist->add($objects);
 			}
-		} 
+		}
+		mysqli_close($con);
 		return $arrylist->toArray();
+	}
+
+
+	public static function getAllProducts($owneruserid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select * FROM Products WHERE owneruserid = '$owneruserid'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = array();
+		$arrylist = new ArrayList;
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					$objects = [];
+					$objects["productid"] =  $row['productid'];
+					$objects["owneruserid"] =  $row['owneruserid']; 
+					$objects["productname"] =  $row['productname']; 
+					$objects["description"] =  $row['description'];
+					$objects["price"] =  $row['price'];
+					$objects["discountprice"] =  $row['discountprice'];
+					$objects["discountpercentage"] =  $row['discountpercentage'];
+					$objects["producttype"] =  $row['producttype'];
+					$objects["sizes"] =  $row['sizes'];
+					$objects["productdetails"] =  $row['productdetails'];
+					$objects["images"] = $row['images'];
+					$arrylist->add($objects);
+			}
+		}
+		mysqli_close($con);
+		return $arrylist->toArray();
+		// "INSERT INTO Products(productid, owneruserid, productname, description, price, discountprice, discountpercentage, producttype, sizes, productdetails, images) VALUES ('$pid', '$owneruserid', '$productname', '$description', '$price', '$discountprice', '$discountpercentage', '$producttype', '$sizes', '$productdetails', '$images')";
+	}
+
+	public static function getImage($imageid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select image FROM ImagesTable WHERE imageid = '$imageid'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$imagedata = "no Image data";
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+				 $imagedata = $row['image'];
+			}
+		}
+		return $imagedata;
+
 	}
 
 	public static function getAllOffers($owneruserid) {
@@ -380,6 +436,7 @@ class Dboperations
 					$arrylist->add($objects);
 			}
 		} 
+		mysqli_close($con);
 		return $arrylist->toArray();
 	}
 
@@ -441,8 +498,14 @@ class CustomersOperations
 			
 	}
 
-	public static function getProducts($owneruserid) {
-
+	public static function getProducts($data) {
+			$owneruserid = $data["owneruserid"];
+			$array = Dboperations::getAllProducts($owneruserid);
+			header('Content-type: application/json');
+			if(count($array) > 0) {
+				$array["status"] = "success";
+			}
+			echo json_encode($array);
 	}
 
 	public static function customerlogin($data) {
@@ -461,6 +524,12 @@ class CustomersOperations
 
 	public static function getOrders($data) {
 
+	}
+
+	public static function getImagedata($data) {
+		$imageid = $data["imageid"];
+		$imagedata = Dboperations::getImage($imageid);
+		echo $imagedata;
 	}
 
 	public static function getAddress($data) {
@@ -608,9 +677,8 @@ class OwnerOperations
 			$discountpercentage = $data["discountpercentage"];
 			$producttype = $data["producttype"];
 			$sizes = $data["sizes"];
-			$productdetails = $data["productdetails"];
-			$images = $data["images"];
-			
+			$productdetails = $data["productdetails"];		
+			$images = $data['images'];	
 			$status = Dboperations::insertintoProducts($productid, $owneruserid, $productname, $description,$price, $discountprice, $discountpercentage, $producttype, $sizes, $productdetails, $images);
 			$array = $array = [
 							    "status" => "success",
