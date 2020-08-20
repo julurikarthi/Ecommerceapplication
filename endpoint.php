@@ -54,15 +54,16 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 }
 
 if(strcasecmp($_SERVER['REQUEST_METHOD'], 'GET') == 0){
-	if($_GET["params"]) {
+	if($_GET["imageid"]) {
 		//Attempt to decode the incoming RAW post data from JSON.
-		$decoded = json_decode($_GET["params"],true);
+		// $decoded = json_decode($_GET["params"],true);
 
 		//If json_decode failed, the JSON is invalid.
-		if(!is_array($decoded)){
-  			  throw new Exception('Received content contained invalid JSON!');
-		}
-		insertintoImagesTable("das","ygygygy","saxwx",getImagefile("scree.png"),"scree.png");
+		// if(!is_array($decoded)){
+  // 			  throw new Exception('Received content contained invalid JSON!');
+		// }
+		// echo $_GET["image"];
+		CustomersOperations::getImage($_GET["imageid"]);
    }
 
 }
@@ -110,6 +111,7 @@ function getImagefile($path) {
 	 public static $getoffers = "getoffers";
 	 public static $getProducts = "getProducts";
 	 public static $getImagedata = "getImagedata";
+	 public static $getImage = "getImage";
 
 }
 class UserIDOperations
@@ -417,7 +419,6 @@ class Dboperations
 			}
 		}
 		return $imagedata;
-
 	}
 
 	public static function getAllOffers($owneruserid) {
@@ -602,6 +603,12 @@ class CustomersOperations
 				echo json_encode($array);
 			}
 
+	}
+
+	public static function getImage($imageid) {
+		$data = "";
+		$imagebase64 = Dboperations::getImage($imageid);
+		echo '<img src="' . $imagebase64 . '" />';
 	}
 
 
