@@ -49,8 +49,13 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 			CustomersOperations::getProducts($decoded["params"]["data"]);
 		} if ($decoded["params"]["method"] == Constants::$getImagedata) {
 			CustomersOperations::getImagedata($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$getOrders) {
+			OwnerOperations::getOrders($decoded["params"]["data"]);
+		} if ($decoded["params"]["method"] == Constants::$getCustomerOrders) {
+			CustomersOperations::getCustomerOrders($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$deleteOwnerProduct) {
+			OwnerOperations::deleteOwnerProduct($decoded["params"]["data"]);
 		} 
-
 }
 
 if(strcasecmp($_SERVER['REQUEST_METHOD'], 'GET') == 0){
@@ -112,6 +117,9 @@ function getImagefile($path) {
 	 public static $getProducts = "getProducts";
 	 public static $getImagedata = "getImagedata";
 	 public static $getImage = "getImage";
+	 public static $getOrders = "getOrders";
+	 public static $getCustomerOrders = "getCustomerOrders";
+	 public static $deleteOwnerProduct = "deleteOwnerProduct";
 
 }
 class UserIDOperations
@@ -441,28 +449,81 @@ class Dboperations
 		return $arrylist->toArray();
 	}
 
-//TODO: get all product and getimages respectiveproduct
-	// public static function getALLProducts($owneruserid) {
-	// 	$con = Dboperations::dbConnection();
-	// 	$insertQuery = "select * FROM Products WHERE owneruserid = '$owneruserid'";
-	// 	$result = mysqli_query($con, $insertQuery);
-	// 	$rowcount = mysqli_num_rows($result);
-	// 	$array = [];
-	// 	if ($rowcount > 0) {
-	// 		while($row = mysqli_fetch_array($result)) {
-	// 				if($row['password'] == $password) {
-	// 				$array["owneruserid"] =  $row['owneruserid']; 
-	// 				$array["ownername"] =  $row['name']; 
-	// 				$array["email"] =  $row['email'];
-	// 				$array["phonenumber"] =  $row['phonenumber'];
-	// 				} else {
-	// 					$array["error"] = "password wrong";
-	// 				}
-	// 		}
-	// 	} 
-	// 	return $array;
-	// }
+	public static function getAllOrders($owneruserid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select * FROM Orders WHERE owneruserid = '$owneruserid'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = array();
+		$arrylist = new ArrayList;
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					$objects = [];
+					$objects["customeruserid"] =  $row['customeruserid']; 
+					$objects["orderid"] =  $row['orderid'];
+					$objects["productname"] =  $row['productname'];
+					$objects["orderprice"] =  $row['orderprice'];
+					$objects["orderdiscount"] =  $row['orderdiscount'];
+					$objects["productid"] =  $row['productid'];
+					$objects["orderdate"] =  $row['orderdate'];
+					$objects["orderstatus"] =  $row['orderstatus'];
+					$objects["orderaddress"] =  $row['orderaddress'];
+					$objects["orderplacedtype"] =  $row['orderplacedtype'];
+					$objects["orderdetails"] =  $row['orderdetails'];
+					$objects["producttype"] =  $row['producttype'];
+					// array_push($array, $objects);
 
+					$arrylist->add($objects);
+			}
+		} 
+		mysqli_close($con);
+	    return $arrylist->toArray();
+	}
+
+	public static function getCustomerAllOrders($owneruserid, $customeruserid){
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select * FROM Orders WHERE owneruserid = '$owneruserid' and customeruserid = '$customeruserid'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = array();
+		$arrylist = new ArrayList;
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					$objects = [];
+					$objects["customeruserid"] =  $row['customeruserid']; 
+					$objects["orderid"] =  $row['orderid'];
+					$objects["productname"] =  $row['productname'];
+					$objects["orderprice"] =  $row['orderprice'];
+					$objects["orderdiscount"] =  $row['orderdiscount'];
+					$objects["productid"] =  $row['productid'];
+					$objects["orderdate"] =  $row['orderdate'];
+					$objects["orderstatus"] =  $row['orderstatus'];
+					$objects["orderaddress"] =  $row['orderaddress'];
+					$objects["orderplacedtype"] =  $row['orderplacedtype'];
+					$objects["orderdetails"] =  $row['orderdetails'];
+					$objects["producttype"] =  $row['producttype'];
+					// array_push($array, $objects);
+
+					$arrylist->add($objects);
+			}
+		} 
+		mysqli_close($con);
+	    return $arrylist->toArray();
+	}
+
+	public static function deleteProduct($productid,$owneruserid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "DELETE FROM Orders WHERE owneruserid = '$owneruserid' and productid = '$productid'";
+		// $result = mysqli_query($con, $insertQuery);
+		$array = array();
+		if ($con->query($insertQuery) === TRUE) {
+			$array[ "status"] =  "success";
+			} else {
+				$array["status"] = "failure";
+				$array["error"] = $con->error;
+			}  
+		return $array;
+	}
 
 }
 
@@ -523,9 +584,6 @@ class CustomersOperations
 		echo json_encode($array);
 	}
 
-	public static function getOrders($data) {
-
-	}
 
 	public static function getImagedata($data) {
 		$imageid = $data["imageid"];
@@ -611,8 +669,15 @@ class CustomersOperations
 		echo '<img src="' . $imagebase64 . '" />';
 	}
 
+	public static function getCustomerOrders($data) {
+		$customeruserid = $data["customeruserid"];
+		$owneruserid = $data["owneruserid"];
+		$array = Dboperations::getCustomerAllOrders($owneruserid, $customeruserid);
+		header('Content-type: application/json');
+		$array["status"] = "success";
+		echo json_encode($array);
+	}
 
-	 
 }
 
 /**
@@ -637,7 +702,6 @@ class OwnerOperations
 			 $password = $data["password"];
 			 $phonenumber = $data["phoneNumber"];
 			 $status = Dboperations::insertIntoOwnersTable($ownserUserid, $ownername, $email, $password, $phonenumber);
-
 			$array = $array = [
 							    "status" => "success",
 							];
@@ -647,8 +711,12 @@ class OwnerOperations
 				}
 	}
 
-	public static function getAllOrders($owneruserid) {
-
+	public static function getOrders($data) {
+		$owneruserid = $data["owneruserid"];
+		$array = Dboperations::getAllOrders($owneruserid);
+		header('Content-type: application/json');
+		$array["status"] = "success";
+		echo json_encode($array);
 	}
 
 
@@ -670,8 +738,11 @@ class OwnerOperations
 
 	}
 
-	public static function deleteProduct($productid) {
-
+	public static function deleteOwnerProduct($data) {
+		$productid = $data["productid"];
+		$owneruserid = $data["owneruserid"];
+		$array = Dboperations::deleteProduct($productid, $owneruserid);
+		echo json_encode($array);
 	}
 
 	public static function addProduct($data) {
