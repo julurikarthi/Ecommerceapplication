@@ -243,7 +243,6 @@ class Dboperations
 		} 
 		// Close connection
 		mysqli_close($con);
-
 	}
 
 
@@ -382,13 +381,14 @@ class Dboperations
 			}
 		}
 		mysqli_close($con);
-		return $arrylist->toArray();
+		$array["address"] = $arrylist->toArray();
+		return $array;
 	}
 
 
-	public static function getAllProducts($owneruserid) {
+	public static function getAllProducts($owneruserid, $offset) {
 		$con = Dboperations::dbConnection();
-		$insertQuery = "select * FROM Products WHERE owneruserid = '$owneruserid'";
+		$insertQuery = "select * FROM Products WHERE owneruserid = '$owneruserid' LIMIT 40 OFFSET $offset";
 		$result = mysqli_query($con, $insertQuery);
 		$rowcount = mysqli_num_rows($result);
 		$array = array();
@@ -411,7 +411,8 @@ class Dboperations
 			}
 		}
 		mysqli_close($con);
-		return $arrylist->toArray();
+		$array["products"] = $arrylist->toArray();
+		return $array;
 		// "INSERT INTO Products(productid, owneruserid, productname, description, price, discountprice, discountpercentage, producttype, sizes, productdetails, images) VALUES ('$pid', '$owneruserid', '$productname', '$description', '$price', '$discountprice', '$discountpercentage', '$producttype', '$sizes', '$productdetails', '$images')";
 	}
 
@@ -446,7 +447,8 @@ class Dboperations
 			}
 		} 
 		mysqli_close($con);
-		return $arrylist->toArray();
+		$array["offers"] = $arrylist->toArray();
+		return $array;
 	}
 
 	public static function getAllOrders($owneruserid) {
@@ -477,7 +479,8 @@ class Dboperations
 			}
 		} 
 		mysqli_close($con);
-	    return $arrylist->toArray();
+		$array["orders"] = $arrylist->toArray();
+	    return $array;
 	}
 
 	public static function getCustomerAllOrders($owneruserid, $customeruserid){
@@ -506,9 +509,10 @@ class Dboperations
 
 					$arrylist->add($objects);
 			}
-		} 
+		}
+		$array["orders"] = $arrylist->toArray();
 		mysqli_close($con);
-	    return $arrylist->toArray();
+	    return $array;
 	}
 
 	public static function deleteProduct($productid,$owneruserid) {
@@ -562,7 +566,10 @@ class CustomersOperations
 
 	public static function getProducts($data) {
 			$owneruserid = $data["owneruserid"];
-			$array = Dboperations::getAllProducts($owneruserid);
+			$offcet = $data["pagenumber"];
+			$offcet = $offcet * 40;
+
+			$array = Dboperations::getAllProducts($owneruserid, $offcet);
 			header('Content-type: application/json');
 			if(count($array) > 0) {
 				$array["status"] = "success";
