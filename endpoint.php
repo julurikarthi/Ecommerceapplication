@@ -55,7 +55,18 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 			CustomersOperations::getCustomerOrders($decoded["params"]["data"]);
 		} else if ($decoded["params"]["method"] == Constants::$deleteOwnerProduct) {
 			OwnerOperations::deleteOwnerProduct($decoded["params"]["data"]);
-		} 
+		} else if ($decoded["params"]["method"] == Constants::$addcategory) {
+			OwnerOperations::addcategory($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$addsubcategory) {
+			OwnerOperations::addsubcategory($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$getcategories) {
+			OwnerOperations::getcategories($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$getSubcategories) {
+			OwnerOperations::getSubcategories($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$getcatProducts) {
+			CustomersOperations::getcatProducts($decoded["params"]["data"]);
+		}
+		
 }
 
 if(strcasecmp($_SERVER['REQUEST_METHOD'], 'GET') == 0){
@@ -120,6 +131,11 @@ function getImagefile($path) {
 	 public static $getOrders = "getOrders";
 	 public static $getCustomerOrders = "getCustomerOrders";
 	 public static $deleteOwnerProduct = "deleteOwnerProduct";
+	 public static $addcategory = "addcategory";
+	 public static $addsubcategory = "addsubcategory";
+	 public static $getcategories = "getcategories";
+	 public static $getSubcategories = "getSubcategories";
+	 public static $getcatProducts = "getcatProducts";
 
 }
 class UserIDOperations
@@ -224,11 +240,48 @@ class Dboperations
 		mysqli_close($con);
 	}
 
+	public static function insertintoCategory($parentcatid, $categoryId, $category, $subcategoryname, $owneruserid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "INSERT INTO Categorys(parentId, categoryId, category, subcategory, owneruserid) VALUES ('$parentcatid', '$categoryId', '$category', '$subcategoryname', '$owneruserid')";
+		if(mysqli_query($con, $insertQuery)){
+	    	return TRUE;
+		} else{
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
+		} 
+		// Close connection
+		mysqli_close($con);
+	}
 
-	public static function insertintoProducts($pid, $owneruserid, $productname, $description, $price, $discountprice, $discountpercentage, $producttype, $sizes, $productdetails, $images) {
+	public static function insertSubcategory($parentcatid, $categoryId, $subcategoryname) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "UPDATE Categorys SET subcategory='$subcategoryname', categoryId='$categoryId' WHERE parentId='$parentcatid'";
+		if(mysqli_query($con, $insertQuery)){
+	    	return TRUE;
+		} else{
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
+		} 
+		// Close connection
+		mysqli_close($con);
+
+	}
+
+
+	public static function insertintoProducts($pid, $owneruserid, $productname, $description, $price, $discountprice, $discountpercentage, $producttype, $sizes, $productdetails, $images, $category) {
 		$con = Dboperations::dbConnection();
 		
-		$insertQuery = "INSERT INTO Products(productid, owneruserid, productname, description, price, discountprice, discountpercentage, producttype, sizes, productdetails, images) VALUES ('$pid', '$owneruserid', '$productname', '$description', '$price', '$discountprice', '$discountpercentage', '$producttype', '$sizes', '$productdetails', '$images')";
+		$insertQuery = "INSERT INTO Products(productid, owneruserid, productname, description, price, discountprice, discountpercentage, producttype, sizes, productdetails, images, category) VALUES ('$pid', '$owneruserid', '$productname', '$description', '$price', '$discountprice', '$discountpercentage', '$producttype', '$sizes', '$productdetails', '$images', '$category')";
 
 		if(mysqli_query($con, $insertQuery)){
 	     	return TRUE;
@@ -407,13 +460,43 @@ class Dboperations
 					$objects["sizes"] =  $row['sizes'];
 					$objects["productdetails"] =  $row['productdetails'];
 					$objects["images"] = $row['images'];
+					$objects["category"] = $row['category'];
 					$arrylist->add($objects);
 			}
 		}
 		mysqli_close($con);
 		$array["products"] = $arrylist->toArray();
 		return $array;
-		// "INSERT INTO Products(productid, owneruserid, productname, description, price, discountprice, discountpercentage, producttype, sizes, productdetails, images) VALUES ('$pid', '$owneruserid', '$productname', '$description', '$price', '$discountprice', '$discountpercentage', '$producttype', '$sizes', '$productdetails', '$images')";
+	}
+
+	public static function getcatAllproduct($owneruserid, $offset, $categoryId) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select * FROM Products WHERE owneruserid = '$owneruserid' and category = '$categoryId' LIMIT 40 OFFSET $offset";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = array();
+		$arrylist = new ArrayList;
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					$objects = [];
+					$objects["productid"] =  $row['productid'];
+					$objects["owneruserid"] =  $row['owneruserid']; 
+					$objects["productname"] =  $row['productname']; 
+					$objects["description"] =  $row['description'];
+					$objects["price"] =  $row['price'];
+					$objects["discountprice"] =  $row['discountprice'];
+					$objects["discountpercentage"] =  $row['discountpercentage'];
+					$objects["producttype"] =  $row['producttype'];
+					$objects["sizes"] =  $row['sizes'];
+					$objects["productdetails"] =  $row['productdetails'];
+					$objects["images"] = $row['images'];
+					$objects["category"] = $row['category'];
+					$arrylist->add($objects);
+			}
+		}
+		mysqli_close($con);
+		$array["products"] = $arrylist->toArray();
+		return $array;
 	}
 
 	public static function getImage($imageid) {
@@ -515,6 +598,48 @@ class Dboperations
 	    return $array;
 	}
 
+	public static function getparentcategories($owneruserid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select parentId, category FROM Categorys WHERE owneruserid = '$owneruserid'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = array();
+		$arrylist = new ArrayList;
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					$objects = [];
+					$objects["parentId"] =  $row['parentId']; 
+					$objects["category"] =  $row['category']; 
+					$arrylist->add($objects);
+				}
+		}
+		$array["categories"] = $arrylist->toArray();
+		mysqli_close($con);
+		return $array;
+
+	}
+
+	public static function getsubcategories($parentId) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select categoryId, subcategory FROM Categorys WHERE parentId = '$parentId'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = array();
+		$arrylist = new ArrayList;
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					$objects = [];
+					$objects["categoryId"] =  $row['categoryId']; 
+					$objects["subcategory"] =  $row['subcategory']; 
+					$arrylist->add($objects);
+				}
+		}
+		$array["categories"] = $arrylist->toArray();
+		mysqli_close($con);
+		return $array;
+
+	}
+
 	public static function deleteProduct($productid,$owneruserid) {
 		$con = Dboperations::dbConnection();
 		$insertQuery = "DELETE FROM Orders WHERE owneruserid = '$owneruserid' and productid = '$productid'";
@@ -570,6 +695,19 @@ class CustomersOperations
 			$offcet = $offcet * 40;
 
 			$array = Dboperations::getAllProducts($owneruserid, $offcet);
+			header('Content-type: application/json');
+			if(count($array) > 0) {
+				$array["status"] = "success";
+			}
+			echo json_encode($array);
+	}
+
+	public static function getcatProducts($data) {
+			$owneruserid = $data["owneruserid"];
+			$offcet = $data["pagenumber"];
+			$offcet = $offcet * 40;
+			$category = $data["categoryId"];
+			$array = Dboperations::getcatAllproduct($owneruserid, $offcet, $category);
 			header('Content-type: application/json');
 			if(count($array) > 0) {
 				$array["status"] = "success";
@@ -673,7 +811,11 @@ class CustomersOperations
 	public static function getImage($imageid) {
 		$data = "";
 		$imagebase64 = Dboperations::getImage($imageid);
-		echo '<img src="' . $imagebase64 . '" />';
+		$array = array();
+		$array["status"] = "success";
+		$array["image"] = $imagebase64;
+		echo json_encode($array);
+		// echo '<img src="' . $imagebase64 . '" />';
 	}
 
 	public static function getCustomerOrders($data) {
@@ -764,7 +906,8 @@ class OwnerOperations
 			$sizes = $data["sizes"];
 			$productdetails = $data["productdetails"];		
 			$images = $data['images'];	
-			$status = Dboperations::insertintoProducts($productid, $owneruserid, $productname, $description,$price, $discountprice, $discountpercentage, $producttype, $sizes, $productdetails, $images);
+			$category = $data['category'];
+			$status = Dboperations::insertintoProducts($productid, $owneruserid, $productname, $description,$price, $discountprice, $discountpercentage, $producttype, $sizes, $productdetails, $images, $category);
 			$array = $array = [
 							    "status" => "success",
 							];
@@ -791,7 +934,7 @@ class OwnerOperations
 	}
 
 	public static function addImages($data) {
-			$productid = "productod";
+			$productid = "productid";
 			$imageid = UserIDOperations::createUserid();
 			$image = $data["image"];
 			$imagename = $data["imagename"];
@@ -806,6 +949,57 @@ class OwnerOperations
 					echo json_encode($array);
 				}
 	}
+
+	public static function addcategory($data) {
+		$category = $data["title"];
+		$owneruserid = $data["owneruserid"];
+		$parentcatid = UserIDOperations::createUserid();
+		$categoryId = "";
+		$subcategoryname = "";
+		$status = Dboperations::insertintoCategory($parentcatid, $categoryId, $category, $subcategoryname, $owneruserid);
+			$array = $array = [
+							    "status" => "success",
+							];
+				header('Content-type: application/json');
+				if($status) {
+					echo json_encode($array);
+				}
+
+	}
+
+	public static function addsubcategory($data) {
+		$catname = $data["title"];
+		$parentId = $data["parentId"];
+		$subcategoryId = UserIDOperations::createUserid();
+		$status = Dboperations::insertSubcategory($parentId, $subcategoryId, $catname);
+			$array = $array = [
+							    "status" => "success",
+							];
+				header('Content-type: application/json');
+				if($status) {
+					echo json_encode($array);
+				}
+
+	}
+
+	public static function getcategories($data) {
+		$owneruserid = $data["owneruserid"];
+		$array = Dboperations::getparentcategories($owneruserid);
+		header('Content-type: application/json');
+		$array["status"] = "success";
+		echo json_encode($array);
+	}
+
+	public static function getSubcategories($data) {
+		$parentId = $data["parentId"];
+		$array = Dboperations::getsubcategories($parentId);
+		header('Content-type: application/json');
+		$array["status"] = "success";
+		echo json_encode($array);
+
+	}
+
+
 
 
 }
