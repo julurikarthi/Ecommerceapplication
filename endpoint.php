@@ -1,6 +1,7 @@
  <?php
 
 include('ArrayList.php');
+include('DBValues.php');
  //Make sure that it is a POST request.
 if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 
@@ -70,7 +71,15 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 }
 
 if(strcasecmp($_SERVER['REQUEST_METHOD'], 'GET') == 0){
-	if($_GET["imageid"]) {
+
+	if (!empty($_GET['test'])) {
+		header('Content-Type: application/json');
+		echo "working";
+		exit();
+		return;
+	}
+
+	if(!empty($_GET['imageid'])) {
 		//Attempt to decode the incoming RAW post data from JSON.
 		// $decoded = json_decode($_GET["params"],true);
 
@@ -153,10 +162,10 @@ class Dboperations
 {
 	
 	public static function dbConnection() {
-		$servername = "localhost";
-	    $username = "root";
-	    $password = "";
-	    $dbname = "EcommerceDatabase";
+		$servername = DBValues::$servername;
+	    $username = DBValues::$username;
+	    $password = DBValues::$password;
+	    $dbname = DBValues::$dbname;
 
 	    // Create connection
 			$con = mysqli_connect($servername, $username, $password, $dbname);
@@ -299,10 +308,10 @@ class Dboperations
 	}
 
 
-	public static function insertintoOrders($customeruserid, $owneruserid, $orderid, $productname, $orderprice, $orderdiscount, $productid, $orderdate, $orderstatus, $orderaddress, $orderplacedtype, $orderdetails, $producttype) {
+	public static function insertintoOrders($customeruserid, $owneruserid, $orderid, $ordertotalamount, $orderdate, $orderplacedtype, $orderstatus, $addressid, $productid, $productname, $productprice, $productdiscount, $productdescription, $productquantity) {
 		$con = Dboperations::dbConnection();
-		$insertQuery = "INSERT INTO Orders(customeruserid, owneruserid, orderid, productname, orderprice, orderdiscount, productid, orderdate, orderstatus, orderaddress, orderplacedtype, orderdetails, producttype) 
-		VALUES ('$customeruserid', '$owneruserid', '$orderid', '$productname', '$orderprice', '$orderdiscount', '$productid', '$orderdate', '$orderstatus', '$orderaddress', '$orderplacedtype', '$orderdetails', '$producttype')";
+		$insertQuery = "INSERT INTO Orders(customeruserid, owneruserid, orderid, ordertotalamount, orderdate, orderplacedtype, orderstatus, addressid, productid, productname, productprice, productdiscount, productdescription, productquantity) 
+		VALUES ('$customeruserid', '$owneruserid', '$orderid', '$ordertotalamount', '$orderdate', '$orderplacedtype', '$orderstatus', '$addressid', '$productid', '$productname', '$productprice', '$productdiscount', '$productdescription', '$productquantity')";
 		if(mysqli_query($con, $insertQuery)){
 	     	return TRUE;
 		} else{
@@ -544,18 +553,20 @@ class Dboperations
 		if ($rowcount > 0) {
 			while($row = mysqli_fetch_array($result)) {
 					$objects = [];
-					$objects["customeruserid"] =  $row['customeruserid']; 
-					$objects["orderid"] =  $row['orderid'];
-					$objects["productname"] =  $row['productname'];
-					$objects["orderprice"] =  $row['orderprice'];
-					$objects["orderdiscount"] =  $row['orderdiscount'];
-					$objects["productid"] =  $row['productid'];
-					$objects["orderdate"] =  $row['orderdate'];
-					$objects["orderstatus"] =  $row['orderstatus'];
-					$objects["orderaddress"] =  $row['orderaddress'];
-					$objects["orderplacedtype"] =  $row['orderplacedtype'];
-					$objects["orderdetails"] =  $row['orderdetails'];
-					$objects["producttype"] =  $row['producttype'];
+					$objects["customeruserid"] = $row['customeruserid'];
+					$objects["owneruserid"] = $row['owneruserid'];
+					$objects["orderid"] = $row['orderid'];
+					$objects["ordertotalamount"] = $row['ordertotalamount'];
+					$objects["orderdate"] = $row['orderdate'];
+					$objects["orderplacedtype"] = $row['orderplacedtype'];
+					$objects["addressid"] = $row['addressid'];
+					$objects["orderstatus"] = $row['orderstatus'];
+					$objects["productid"] = $row['productid'];
+					$objects["productname"] = $row['productname'];
+					$objects["productprice"] = $row['productprice'];
+					$objects["productdiscount"] = $row['productdiscount'];
+					$objects["productdescription"] = $row['productdescription'];
+					$objects["productquantity"] = $row['productquantity'];
 					// array_push($array, $objects);
 
 					$arrylist->add($objects);
@@ -576,18 +587,20 @@ class Dboperations
 		if ($rowcount > 0) {
 			while($row = mysqli_fetch_array($result)) {
 					$objects = [];
-					$objects["customeruserid"] =  $row['customeruserid']; 
-					$objects["orderid"] =  $row['orderid'];
-					$objects["productname"] =  $row['productname'];
-					$objects["orderprice"] =  $row['orderprice'];
-					$objects["orderdiscount"] =  $row['orderdiscount'];
-					$objects["productid"] =  $row['productid'];
-					$objects["orderdate"] =  $row['orderdate'];
-					$objects["orderstatus"] =  $row['orderstatus'];
-					$objects["orderaddress"] =  $row['orderaddress'];
-					$objects["orderplacedtype"] =  $row['orderplacedtype'];
-					$objects["orderdetails"] =  $row['orderdetails'];
-					$objects["producttype"] =  $row['producttype'];
+					$objects["customeruserid"] = $row['customeruserid'];
+					$objects["owneruserid"] = $row['owneruserid'];
+					$objects["orderid"] = $row['orderid'];
+					$objects["ordertotalamount"] = $row['ordertotalamount'];
+					$objects["orderdate"] = $row['orderdate'];
+					$objects["orderplacedtype"] = $row['orderplacedtype'];
+					$objects["addressid"] = $row['addressid'];
+					$objects["orderstatus"] = $row['orderstatus'];
+					$objects["productid"] = $row['productid'];
+					$objects["productname"] = $row['productname'];
+					$objects["productprice"] = $row['productprice'];
+					$objects["productdiscount"] = $row['productdiscount'];
+					$objects["productdescription"] = $row['productdescription'];
+					$objects["productquantity"] = $row['productquantity'];
 					// array_push($array, $objects);
 
 					$arrylist->add($objects);
@@ -781,23 +794,26 @@ class CustomersOperations
 
 	public static function placeOrder($data) {
 		//insertintoOrders($customeruserid, $owneruserid, $orderid, $productname, $orderprice, $orderdiscount, $productid, $orderdate, $orderstatus, $orderaddress, $orderplacedtype, $orderdetails, $producttype)
+		$status = FALSE;
 		$customeruserid = $data["customeruserid"];
 		$owneruserid = $data["owneruserid"];
 		$orderid = UserIDOperations::createUserid();
-		$productname = $data["productname"];
-		$orderprice = $data["orderprice"];
-		$orderdiscount = $data["orderdiscount"];
-		$productid = $data["productid"];
+		$ordertotalamount = $data["ordertotalamount"];
 		$orderdate = $data["orderdate"];
-		$orderstatus = $data["orderstatus"];
-		$orderaddress = $data["orderaddress"];
 		$orderplacedtype = $data["orderplacedtype"];
-		$orderdetails = $data["orderdetails"];
-		$producttype = $data["producttype"];
+		$addressid = $data["addressid"];
+		$products = $data["products"];
+		$orderstatus = "New";
+		foreach ($products as $product) {
+			$productid = $product["productid"];
+			$productname = $product["productname"];
+			$productprice = $product["productprice"];
+			$productdiscount = $product["productdiscount"];
+			$productdescription = $product["productdescription"];
+			$productquantity = $product["productquantity"];
+			$status = Dboperations::insertintoOrders($customeruserid, $owneruserid, $orderid, $ordertotalamount, $orderdate, $orderplacedtype, $orderstatus, $addressid, $productid, $productname, $productprice, $productdiscount, $productdescription, $productquantity);
 
-		$status = Dboperations::insertintoOrders($customeruserid, $owneruserid, $orderid, $productname, $orderprice, $orderdiscount, $productid, $orderdate, $orderstatus, $orderaddress, $orderplacedtype, $orderdetails, $producttype);
-
-
+		}
 		$array = $array = [
 						    "status" => "success",
 						];
@@ -998,9 +1014,6 @@ class OwnerOperations
 		echo json_encode($array);
 
 	}
-
-
-
 
 }
 
