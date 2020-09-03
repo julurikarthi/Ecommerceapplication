@@ -180,9 +180,9 @@ class Dboperations
 		return $con;
 	}
 
-	public static function insertIntoOwnersTable($ownserUserid, $name, $email, $password, $phoneNumber) {
+	public static function insertIntoOwnersTable($ownserUserid, $name, $email, $password, $phoneNumber,$storename) {
 		$con = Dboperations::dbConnection();
-		$insertQuery = "INSERT INTO OwnersAccountsTable(owneruserid, name, email, password, phonenumber) VALUES ('$ownserUserid', '$name', '$email', '$password', '$phoneNumber')";
+		$insertQuery = "INSERT INTO OwnersAccountsTable(owneruserid, name, email, password, phonenumber, storename) VALUES ('$ownserUserid', '$name', '$email', '$password', '$phoneNumber', '$storename')";
 		if(mysqli_query($con, $insertQuery)){
 	     	return TRUE;
 		} else{
@@ -387,6 +387,7 @@ class Dboperations
 					$array["ownername"] =  $row['name']; 
 					$array["email"] =  $row['email'];
 					$array["phonenumber"] =  $row['phonenumber'];
+					$array["storename"] =  $row['storename'];
 					} else {
 						$array["error"] = "password wrong";
 					}
@@ -869,7 +870,8 @@ class OwnerOperations
 			 $email = $data["email"];
 			 $password = $data["password"];
 			 $phonenumber = $data["phoneNumber"];
-			 $status = Dboperations::insertIntoOwnersTable($ownserUserid, $ownername, $email, $password, $phonenumber);
+			 $storename = $data["storename"];
+			 $status = Dboperations::insertIntoOwnersTable($ownserUserid, $ownername, $email, $password, $phonenumber,$storename);
 			$array = $array = [
 							    "status" => "success",
 							];
@@ -962,6 +964,7 @@ class OwnerOperations
 			$status = Dboperations::insertintoImagesTable($productid, $owneruserid, $imageid, $image, $imagename);
 			$array = $array = [
 							    "status" => "success",
+							    "imageid"=> $imageid
 							];
 				header('Content-type: application/json');
 				if($status) {
