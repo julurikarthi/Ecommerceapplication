@@ -69,7 +69,11 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 			OwnerOperations::getSubcategories($decoded["params"]["data"]);
 		} else if ($decoded["params"]["method"] == Constants::$getcatProducts) {
 			CustomersOperations::getcatProducts($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$deleteImage) {
+			OwnerOperations::deleteImage($decoded["params"]["data"]);
 		}
+
+		
 		
 }
 
@@ -148,6 +152,7 @@ function getImagefile($path) {
 	 public static $getcategories = "getcategories";
 	 public static $getSubcategories = "getSubcategories";
 	 public static $getcatProducts = "getcatProducts";
+	 public static $deleteImage = "deleteImage";
 
 }
 class UserIDOperations
@@ -671,6 +676,20 @@ class Dboperations
 		return $array;
 	}
 
+	public static function deleteImages($imageid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "DELETE FROM ImagesTable WHERE imageid = '$imageid'";
+		// $result = mysqli_query($con, $insertQuery);
+		$array = array();
+		if ($con->query($insertQuery) === TRUE) {
+			$array[ "status"] =  "success";
+			} else {
+				$array["status"] = "failure";
+				$array["error"] = $con->error;
+			}  
+		return $array;
+	}
+
 }
 
 /**
@@ -1019,6 +1038,13 @@ class OwnerOperations
 		$array["status"] = "success";
 		echo json_encode($array);
 
+	}
+
+	public static function deleteImage($data) {
+		$imageid = $data["imageid"];
+		$array = Dboperations::deleteImages($imageid);
+		header('Content-type: application/json');
+		echo json_encode($array);
 	}
 
 }
