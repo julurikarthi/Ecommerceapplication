@@ -71,7 +71,12 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 			CustomersOperations::getcatProducts($decoded["params"]["data"]);
 		} else if ($decoded["params"]["method"] == Constants::$deleteImage) {
 			OwnerOperations::deleteImage($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$getAllCategories) {
+			OwnerOperations::getAllCategories($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$updateProduct) {
+			OwnerOperations::updateProduct($decoded["params"]["data"]);
 		}
+
 
 		
 		
@@ -153,6 +158,8 @@ function getImagefile($path) {
 	 public static $getSubcategories = "getSubcategories";
 	 public static $getcatProducts = "getcatProducts";
 	 public static $deleteImage = "deleteImage";
+	 public static $getAllCategories = "getAllCategories";
+	 public static $updateProduct = "updateProduct";
 
 }
 class UserIDOperations
@@ -299,6 +306,27 @@ class Dboperations
 		$con = Dboperations::dbConnection();
 		
 		$insertQuery = "INSERT INTO Products(productid, owneruserid, productname, description, price, discountprice, discountpercentage, producttype, sizes, productdetails, images, category) VALUES ('$pid', '$owneruserid', '$productname', '$description', '$price', '$discountprice', '$discountpercentage', '$producttype', '$sizes', '$productdetails', '$images', '$category')";
+
+		if(mysqli_query($con, $insertQuery)){
+	     	return TRUE;
+		} else{
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
+		} 
+		// Close connection
+		mysqli_close($con);
+	}
+
+
+	public static function updateintoProducts($pid, $owneruserid, $productname, $description, $price, $discountprice, $discountpercentage, $producttype, $sizes, $productdetails, $images, $category) {
+		$con = Dboperations::dbConnection();
+		
+		$insertQuery = "UPDATE Products SET productname = '$productname', description = '$description', price = '$price', discountprice = '$discountprice', producttype = '$producttype', sizes = '$sizes', productdetails = '$productdetails', images = '$images', category = '$category' where productid = '$pid' and owneruserid = '$owneruserid'";
 
 		if(mysqli_query($con, $insertQuery)){
 	     	return TRUE;
@@ -632,6 +660,28 @@ class Dboperations
 					$objects = [];
 					$objects["parentId"] =  $row['parentId']; 
 					$objects["category"] =  $row['category']; 
+					$arrylist->add($objects);
+				}
+		}
+		$array["categories"] = $arrylist->toArray();
+		mysqli_close($con);
+		return $array;
+	}
+
+	public static function getAllCategories($owneruserid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select * FROM Categorys WHERE owneruserid = '$owneruserid'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = array();
+		$arrylist = new ArrayList;
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					$objects = [];
+					$objects["parentId"] =  $row['parentId']; 
+					$objects["category"] =  $row['category']; 
+					$objects["categoryId"] =  $row['categoryId'];
+					$objects["subcategory"] =  $row['subcategory'];
 					$arrylist->add($objects);
 				}
 		}
@@ -1040,11 +1090,43 @@ class OwnerOperations
 
 	}
 
+	public static function getAllCategories($data) {
+		$owneruserid = $data["owneruserid"];
+		$array = Dboperations::getAllCategories($owneruserid);
+		header('Content-type: application/json');
+		$array["status"] = "success";
+		echo json_encode($array);
+	}
+
 	public static function deleteImage($data) {
 		$imageid = $data["imageid"];
 		$array = Dboperations::deleteImages($imageid);
 		header('Content-type: application/json');
 		echo json_encode($array);
+	}
+
+	public static function updateProduct($data) {
+			$productid = $data["productid"];
+			$owneruserid = $data["owneruserid"];
+			$productname = $data["productname"];
+			$description = $data["description"];
+			$price = $data["price"];
+			$discountprice = $data["discountprice"];
+			$discountpercentage = $data["discountpercentage"];
+			$producttype = $data["producttype"];
+			$sizes = $data["sizes"];
+			$productdetails = $data["productdetails"];		
+			$images = $data['images'];	
+			$category = $data['category'];
+			$status = Dboperations::updateintoProducts($productid, $owneruserid, $productname, $description,$price, $discountprice, $discountpercentage, $producttype, $sizes, $productdetails, $images, $category);
+			$array = $array = [
+							    "status" => "success",
+							];
+				header('Content-type: application/json');
+				if($status) {
+					echo json_encode($array);
+				}
+
 	}
 
 }
