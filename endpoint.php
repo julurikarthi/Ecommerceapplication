@@ -75,11 +75,16 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 			OwnerOperations::getAllCategories($decoded["params"]["data"]);
 		} else if ($decoded["params"]["method"] == Constants::$updateProduct) {
 			OwnerOperations::updateProduct($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$updatetoCompleteOrder) {
+			OwnerOperations::updatetoCompleteOrder($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$updatePasword) {
+			OwnerOperations::updatePasword($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$updatetoCancelOrder) {
+			OwnerOperations::updatetoCancelOrder($decoded["params"]["data"]);
+		} else if ($decoded["params"]["method"] == Constants::$updatetoOrderStatus) {
+			OwnerOperations::updatetoOrderStatus($decoded["params"]["data"]);
 		}
-
-
-		
-		
+	
 }
 
 if(strcasecmp($_SERVER['REQUEST_METHOD'], 'GET') == 0){
@@ -160,6 +165,10 @@ function getImagefile($path) {
 	 public static $deleteImage = "deleteImage";
 	 public static $getAllCategories = "getAllCategories";
 	 public static $updateProduct = "updateProduct";
+	 public static $updatetoCompleteOrder = "updatetoCompleteOrder";
+	 public static $updatePasword = "updatePasword";
+	 public static $updatetoCancelOrder = "updatetoCancelOrder";
+	 public static $updatetoOrderStatus = "updatetoOrderStatus";
 
 }
 class UserIDOperations
@@ -266,7 +275,7 @@ class Dboperations
 
 	public static function insertintoCategory($parentcatid, $categoryId, $category, $subcategoryname, $owneruserid) {
 		$con = Dboperations::dbConnection();
-		$insertQuery = "INSERT INTO Categorys(parentId, categoryId, category, subcategory, owneruserid) VALUES ('$parentcatid', '$categoryId', '$category', '$subcategoryname', '$owneruserid')";
+		$insertQuery = "INSERT INTO Categorys(parentId, categoryId, category, subcategory,subcategoryparentid, owneruserid) VALUES ('$parentcatid', '$categoryId', '$category', '$subcategoryname','', '$owneruserid')";
 		if(mysqli_query($con, $insertQuery)){
 	    	return TRUE;
 		} else{
@@ -284,7 +293,8 @@ class Dboperations
 
 	public static function insertSubcategory($parentcatid, $categoryId, $subcategoryname) {
 		$con = Dboperations::dbConnection();
-		$insertQuery = "UPDATE Categorys SET subcategory='$subcategoryname', categoryId='$categoryId' WHERE parentId='$parentcatid'";
+		$insertQuery = "INSERT INTO Categorys(parentId, categoryId, category, subcategory,subcategoryparentid, owneruserid) VALUES ('', '$categoryId', '', '$subcategoryname','$parentcatid', '')";
+
 		if(mysqli_query($con, $insertQuery)){
 	    	return TRUE;
 		} else{
@@ -344,10 +354,124 @@ class Dboperations
 	}
 
 
-	public static function insertintoOrders($customeruserid, $owneruserid, $orderid, $ordertotalamount, $orderdate, $orderplacedtype, $orderstatus, $addressid, $productid, $productname, $productprice, $productdiscount, $productdescription, $productquantity) {
+	public static function updatetoCompleteOrder($orderid,$owneruserid) {
 		$con = Dboperations::dbConnection();
-		$insertQuery = "INSERT INTO Orders(customeruserid, owneruserid, orderid, ordertotalamount, orderdate, orderplacedtype, orderstatus, addressid, productid, productname, productprice, productdiscount, productdescription, productquantity) 
-		VALUES ('$customeruserid', '$owneruserid', '$orderid', '$ordertotalamount', '$orderdate', '$orderplacedtype', '$orderstatus', '$addressid', '$productid', '$productname', '$productprice', '$productdiscount', '$productdescription', '$productquantity')";
+		$insertQuery = "UPDATE Orders SET orderstatus = 'complete' where orderid = '$orderid' and owneruserid = '$owneruserid'";
+		if(mysqli_query($con, $insertQuery)){
+	     	return TRUE;
+		} else{
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
+		} 
+		// Close connection
+		mysqli_close($con);
+
+	}
+
+	public static function updatetoCancelOrder($orderid,$owneruserid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "UPDATE Orders SET orderstatus = 'cancel' where orderid = '$orderid' and owneruserid = '$owneruserid'";
+		
+		if(mysqli_query($con, $insertQuery)){
+	     	return TRUE;
+		} else{
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
+		} 
+		// Close connection
+		mysqli_close($con);
+
+	}
+
+	public static function updatetoOrderStatus($orderid,$owneruserid,$orderstatus) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "UPDATE Orders SET orderstatus = '$orderstatus' where orderid = '$orderid' and owneruserid = '$owneruserid'";
+		
+		if(mysqli_query($con, $insertQuery)){
+	     	return TRUE;
+		} else{
+	    	$array = $array = [
+						    "status" => "failure"
+						];
+			$array["error"] = "". mysqli_error($con);
+			header('Content-type: application/json');
+			echo json_encode($array);
+			return FALSE;
+		} 
+		// Close connection
+		mysqli_close($con);
+
+	}
+
+	public static function updatetoPassword($oldpassword,$newpassword,$owneruserid) {
+		$con = Dboperations::dbConnection();
+		if(Dboperations::ispasswordmatch($con, $oldpassword, $owneruserid) == TRUE) {
+			$insertQuery = "UPDATE OwnersAccountsTable SET password = '$newpassword' where owneruserid = '$owneruserid'";
+
+			if(mysqli_query($con, $insertQuery)){
+				$array = $array = [
+							    "status" => "success"
+							];
+				header('Content-type: application/json');
+				echo json_encode($array);
+		     	return TRUE;
+			} else {
+		    	$array = $array = [
+							    "status" => "failure",
+							    "error" => "owneruserid is wrong"
+							];
+				$array["error"] = "". mysqli_error($con);
+				header('Content-type: application/json');
+				echo json_encode($array);
+				return FALSE;
+			} 
+			// Close connection
+			mysqli_close($con);
+		} else {
+			$array = $array = [
+							    "status" => "failure",
+							    "error" => "old password is wrong"
+							];
+				header('Content-type: application/json');
+				echo json_encode($array);
+		}
+	
+
+	}
+
+	public static function ispasswordmatch($con,$oldpassword,$owneruserid) {
+		$insertQuery = "select password FROM OwnersAccountsTable WHERE owneruserid = '$owneruserid'";
+		$result = mysqli_query($con, $insertQuery);
+		$rowcount = mysqli_num_rows($result);
+		$array = [];
+		if ($rowcount > 0) {
+			while($row = mysqli_fetch_array($result)) {
+					if($row['password'] == $oldpassword) {
+						return TRUE;
+					} else {
+						return FALSE;
+					}
+			}
+		} else {
+			return FALSE;
+		}
+
+	}
+
+	public static function insertintoOrders($customeruserid, $owneruserid, $orderid, $ordertotalamount, $orderdate, $orderplacedtype, $orderstatus, $addressid, $productid, $productname, $productprice, $productdiscount, $productdescription, $productquantity,$imageid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "INSERT INTO Orders(customeruserid, owneruserid, orderid, ordertotalamount, orderdate, orderplacedtype, orderstatus, addressid, productid, productname, productprice, productdiscount, productdescription, productquantity,imageid) 
+		VALUES ('$customeruserid', '$owneruserid', '$orderid', '$ordertotalamount', '$orderdate', '$orderplacedtype', '$orderstatus', '$addressid', '$productid', '$productname', '$productprice', '$productdiscount', '$productdescription', '$productquantity', '$imageid')";
 		if(mysqli_query($con, $insertQuery)){
 	     	return TRUE;
 		} else{
@@ -580,9 +704,9 @@ class Dboperations
 		return $array;
 	}
 
-	public static function getAllOrders($owneruserid) {
+	public static function getAllOrders($owneruserid, $offset) {
 		$con = Dboperations::dbConnection();
-		$insertQuery = "select * FROM Orders WHERE owneruserid = '$owneruserid'";
+		$insertQuery = "select * FROM Orders WHERE owneruserid = '$owneruserid' LIMIT 40 OFFSET $offset";
 		$result = mysqli_query($con, $insertQuery);
 		$rowcount = mysqli_num_rows($result);
 		$array = array();
@@ -598,14 +722,7 @@ class Dboperations
 					$objects["orderplacedtype"] = $row['orderplacedtype'];
 					$objects["addressid"] = $row['addressid'];
 					$objects["orderstatus"] = $row['orderstatus'];
-					$objects["productid"] = $row['productid'];
-					$objects["productname"] = $row['productname'];
-					$objects["productprice"] = $row['productprice'];
-					$objects["productdiscount"] = $row['productdiscount'];
-					$objects["productdescription"] = $row['productdescription'];
-					$objects["productquantity"] = $row['productquantity'];
-					// array_push($array, $objects);
-
+					$objects["products"] = Dboperations::productOrders($owneruserid,$row['productid'],$objects["orderid"] );
 					$arrylist->add($objects);
 			}
 		} 
@@ -614,6 +731,27 @@ class Dboperations
 	    return $array;
 	}
 
+
+	public static function productOrders($owneruserid,$productid,$orderid) {
+		$con = Dboperations::dbConnection();
+		$insertQuery = "select productname, productprice, productdescription, productdiscount, productquantity, imageid FROM Orders WHERE owneruserid = '$owneruserid' and productid = '$productid' and orderid = '$orderid'";
+		
+		$result = mysqli_query($con, $insertQuery);
+		$array = array();
+		$arrylist = new ArrayList;
+		while($row = mysqli_fetch_array($result)) {
+				$objects = [];
+				$objects["productid"] = $productid;
+				$objects["productname"] = $row['productname'];
+				$objects["productprice"] = $row['productprice'];
+				$objects["productdiscount"] = $row['productdiscount'];
+				$objects["productdescription"] = $row['productdescription'];
+				$objects["productquantity"] = $row['productquantity'];
+				$objects["imageid"] = $row['imageid'];
+				$arrylist->add($objects);
+		}
+		return $arrylist->toArray();
+	}
 	public static function getCustomerAllOrders($owneruserid, $customeruserid){
 		$con = Dboperations::dbConnection();
 		$insertQuery = "select * FROM Orders WHERE owneruserid = '$owneruserid' and customeruserid = '$customeruserid'";
@@ -650,7 +788,7 @@ class Dboperations
 
 	public static function getparentcategories($owneruserid) {
 		$con = Dboperations::dbConnection();
-		$insertQuery = "select parentId, category FROM Categorys WHERE owneruserid = '$owneruserid'";
+		$insertQuery = "select parentId, category FROM Categorys WHERE owneruserid = '$owneruserid' AND parentId != ''";
 		$result = mysqli_query($con, $insertQuery);
 		$rowcount = mysqli_num_rows($result);
 		$array = array();
@@ -693,7 +831,8 @@ class Dboperations
 
 	public static function getsubcategories($parentId) {
 		$con = Dboperations::dbConnection();
-		$insertQuery = "select categoryId, subcategory FROM Categorys WHERE parentId = '$parentId'";
+
+		$insertQuery = "select categoryId, subcategory FROM Categorys WHERE subcategoryparentid = '$parentId'  ";
 		$result = mysqli_query($con, $insertQuery);
 		$rowcount = mysqli_num_rows($result);
 		$array = array();
@@ -884,7 +1023,8 @@ class CustomersOperations
 			$productdiscount = $product["productdiscount"];
 			$productdescription = $product["productdescription"];
 			$productquantity = $product["productquantity"];
-			$status = Dboperations::insertintoOrders($customeruserid, $owneruserid, $orderid, $ordertotalamount, $orderdate, $orderplacedtype, $orderstatus, $addressid, $productid, $productname, $productprice, $productdiscount, $productdescription, $productquantity);
+			$imageid = $product["imageid"];
+			$status = Dboperations::insertintoOrders($customeruserid, $owneruserid, $orderid, $ordertotalamount, $orderdate, $orderplacedtype, $orderstatus, $addressid, $productid, $productname, $productprice, $productdiscount, $productdescription, $productquantity, $imageid);
 
 		}
 		$array = $array = [
@@ -952,7 +1092,8 @@ class OwnerOperations
 
 	public static function getOrders($data) {
 		$owneruserid = $data["owneruserid"];
-		$array = Dboperations::getAllOrders($owneruserid);
+		$pagenumber = $data["pagenumber"];
+		$array = Dboperations::getAllOrders($owneruserid, $pagenumber);
 		header('Content-type: application/json');
 		$array["status"] = "success";
 		echo json_encode($array);
@@ -1128,6 +1269,55 @@ class OwnerOperations
 				}
 
 	}
+
+	public static function updatetoCompleteOrder($data) {
+			$orderid = $data["orderid"];
+			$owneruserid = $data["owneruserid"];
+			$status = Dboperations::updatetoCompleteOrder($orderid, $owneruserid);
+			$array = $array = [
+							    "status" => "success",
+							];
+				header('Content-type: application/json');
+				if($status) {
+					echo json_encode($array);
+				}
+	}
+	public static function updatetoCancelOrder($data) {
+			$orderid = $data["orderid"];
+			$owneruserid = $data["owneruserid"];
+			$status = Dboperations::updatetoCancelOrder($orderid, $owneruserid);
+			$array = $array = [
+							    "status" => "success",
+							];
+				header('Content-type: application/json');
+				if($status) {
+					echo json_encode($array);
+				}
+	}
+
+	public static function updatetoOrderStatus($data) {
+			$orderid = $data["orderid"];
+			$orderstatus = $data["orderstatus"];
+			$owneruserid = $data["owneruserid"];
+			$status = Dboperations::updatetoOrderStatus($orderid, $owneruserid,$orderstatus);
+			$array = $array = [
+							    "status" => "success",
+							];
+				header('Content-type: application/json');
+				if($status) {
+					echo json_encode($array);
+				}
+	}
+
+	public static function updatePasword($data) {
+			$oldpassword = $data["oldpassword"];
+			$newpassword = $data["newpassword"];
+			$owneruserid = $data["owneruserid"];
+			$status = Dboperations::updatetoPassword($oldpassword,$newpassword,$owneruserid);
+
+	}
+
+
 
 }
 
